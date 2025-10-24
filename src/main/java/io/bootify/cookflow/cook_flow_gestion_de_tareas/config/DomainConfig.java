@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
 @Configuration
-@EntityScan("io.bootify.cookflow.cook_flow_gestion_de_tareas")
-@EnableJpaRepositories("io.bootify.cookflow.cook_flow_gestion_de_tareas")
+@EntityScan("io.bootify.cookflow.cook_flow_gestion_de_tareas.domain")
+@EnableJpaRepositories("io.bootify.cookflow.cook_flow_gestion_de_tareas.repos")
 @EnableTransactionManagement
 @EnableJpaAuditing(dateTimeProviderRef = "auditingDateTimeProvider")
 public class DomainConfig {
