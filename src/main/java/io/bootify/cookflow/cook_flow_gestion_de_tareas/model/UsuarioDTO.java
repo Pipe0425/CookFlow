@@ -1,5 +1,6 @@
 package io.bootify.cookflow.cook_flow_gestion_de_tareas.model;
 
+import io.bootify.cookflow.cook_flow_gestion_de_tareas.domain.Role;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -17,6 +18,10 @@ public class UsuarioDTO {
     private String nombre;
 
     @NotNull
+    @Size(max = 100)
+    private String apellido;
+
+    @NotNull
     @Size(max = 120)
     private String email;
 
@@ -26,5 +31,8 @@ public class UsuarioDTO {
 
     @NotNull
     private Boolean activo;
+
+    @NotNull
+    private Role role;
 
 }

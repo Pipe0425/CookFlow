@@ -3,6 +3,8 @@ package io.bootify.cookflow.cook_flow_gestion_de_tareas.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -42,6 +44,15 @@ public class TareaPrep {
 
     @Column(nullable = false)
     private String descripcion;
+
+    @Enumerated(EnumType.STRING)
+    private Prioridad prioridad;
+
+    @Enumerated(EnumType.STRING)
+    private Estado estado;
+
+    @Enumerated(EnumType.STRING)
+    private Turno turno;
 
     @Column
     private Boolean archivada;

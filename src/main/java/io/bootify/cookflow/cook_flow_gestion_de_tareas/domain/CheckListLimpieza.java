@@ -3,6 +3,8 @@ package io.bootify.cookflow.cook_flow_gestion_de_tareas.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -34,6 +36,9 @@ public class CheckListLimpieza {
     @Column(nullable = false)
     private LocalDate fecha;
 
+    @Enumerated(EnumType.STRING)
+    private Turno turno;
+
     @Column
     private Boolean cocinaLimpia;
 
@@ -42,6 +47,9 @@ public class CheckListLimpieza {
 
     @Column
     private Boolean residuosDesechados;
+
+    @Enumerated(EnumType.STRING)
+    private EstadoGeneral estadoGeneral;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsable_id")

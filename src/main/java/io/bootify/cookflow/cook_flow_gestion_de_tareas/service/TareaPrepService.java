@@ -68,6 +68,9 @@ public class TareaPrepService {
         tareaPrepDTO.setFecha(tareaPrep.getFecha());
         tareaPrepDTO.setNombreTarea(tareaPrep.getNombreTarea());
         tareaPrepDTO.setDescripcion(tareaPrep.getDescripcion());
+        tareaPrepDTO.setPrioridad(tareaPrep.getPrioridad());
+        tareaPrepDTO.setEstado(tareaPrep.getEstado());
+        tareaPrepDTO.setTurno(tareaPrep.getTurno());
         tareaPrepDTO.setArchivada(tareaPrep.getArchivada());
         tareaPrepDTO.setResponsable(tareaPrep.getResponsable() == null ? null : tareaPrep.getResponsable().getIdUsuario());
         return tareaPrepDTO;
@@ -77,6 +80,9 @@ public class TareaPrepService {
         tareaPrep.setFecha(tareaPrepDTO.getFecha());
         tareaPrep.setNombreTarea(tareaPrepDTO.getNombreTarea());
         tareaPrep.setDescripcion(tareaPrepDTO.getDescripcion());
+        tareaPrep.setPrioridad(tareaPrepDTO.getPrioridad());
+        tareaPrep.setEstado(tareaPrepDTO.getEstado());
+        tareaPrep.setTurno(tareaPrepDTO.getTurno());
         tareaPrep.setArchivada(tareaPrepDTO.getArchivada());
         final Usuario responsable = tareaPrepDTO.getResponsable() == null ? null : usuarioRepository.findById(tareaPrepDTO.getResponsable())
                 .orElseThrow(() -> new NotFoundException("responsable not found"));

@@ -63,9 +63,11 @@ public class CheckListLimpiezaService {
             final CheckListLimpiezaDTO checkListLimpiezaDTO) {
         checkListLimpiezaDTO.setIdCheckListLimpieza(checkListLimpieza.getIdCheckListLimpieza());
         checkListLimpiezaDTO.setFecha(checkListLimpieza.getFecha());
+        checkListLimpiezaDTO.setTurno(checkListLimpieza.getTurno() == null ? null : checkListLimpieza.getTurno().name());
         checkListLimpiezaDTO.setCocinaLimpia(checkListLimpieza.getCocinaLimpia());
         checkListLimpiezaDTO.setUtenciliosLimpios(checkListLimpieza.getUtenciliosLimpios());
         checkListLimpiezaDTO.setResiduosDesechados(checkListLimpieza.getResiduosDesechados());
+        checkListLimpiezaDTO.setEstadoGeneral(checkListLimpieza.getEstadoGeneral() == null ? null : checkListLimpieza.getEstadoGeneral().name());
         checkListLimpiezaDTO.setResponsable(checkListLimpieza.getResponsable() == null ? null : checkListLimpieza.getResponsable().getIdUsuario());
         return checkListLimpiezaDTO;
     }

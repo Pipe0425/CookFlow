@@ -1,8 +1,9 @@
 spring:
   datasource:
-    url: ${JDBC_DATABASE_URL:jdbc:mariadb://localhost/CookFlow-Gestion-de-tareas?serverTimezone=UTC}
-    username: ${JDBC_DATABASE_USERNAME:root}
-    password: ${JDBC_DATABASE_PASSWORD:<<YOUR_PASSWORD>>}
+    url: jdbc:mariadb://localhost:3306/cookflow
+    username: root
+    password: 
+    driver-class-name: org.mariadb.jdbc.Driver
     hikari:
       connection-timeout: 30000
       maximum-pool-size: 10

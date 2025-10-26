@@ -15,11 +15,17 @@ public class CheckListLimpiezaDTO {
     @NotNull
     private LocalDate fecha;
 
+    @NotNull
+    private String turno;
+
     private Boolean cocinaLimpia;
 
     private Boolean utenciliosLimpios;
 
     private Boolean residuosDesechados;
+
+    @NotNull
+    private String estadoGeneral;
 
     private Long responsable;
 

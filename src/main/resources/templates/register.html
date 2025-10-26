@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - CookFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0F084B;
+            --secondary-color: #26408B;
+            --accent-color: #A6CFD5;
+            --light-accent: #C2E7D9;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--light-accent) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+
+        .register-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(15, 8, 75, 0.15);
+            overflow: hidden;
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .register-left {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 60px 40px;
+            color: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .register-left::before {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(166, 207, 213, 0.1);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+        }
+
+        .register-left::after {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: rgba(194, 231, 217, 0.1);
+            border-radius: 50%;
+            bottom: -50px;
+            left: -50px;
+        }
+
+        .logo-section {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+
+        .register-left h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .register-left p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin-top: 40px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+
+        .feature-item i {
+            margin-right: 12px;
+            color: var(--light-accent);
+            font-size: 1.2rem;
+        }
+
+        .register-right {
+            padding: 60px 50px;
+            flex: 1.2;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .register-header h2 {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .register-header p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .form-label {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(38, 64, 139, 0.15);
+        }
+
+        .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .invalid-feedback {
+            font-size: 0.85rem;
+        }
+
+        .btn-register {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(15, 8, 75, 0.2);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .login-link a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            color: var(--primary-color);
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .row.g-3 {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .register-container {
+                flex-direction: column;
+            }
+
+            .register-left {
+                padding: 40px 30px;
+            }
+
+            .register-right {
+                padding: 40px 30px;
+            }
+
+            .register-left h1 {
+                font-size: 2rem;
+            }
+
+            .feature-list {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <!-- Left Section -->
+        <div class="register-left">
+            <div class="logo-section">
+                <i class="fas fa-utensils logo-icon"></i>
+                <h1>CookFlow</h1>
+                <p>Gestión de Tareas Culinarias</p>
+            </div>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Organiza tus recetas fácilmente</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Gestiona tareas de cocina</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Colabora con tu equipo</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Acceso desde cualquier lugar</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section - Form -->
+        <div class="register-right">
+            <div class="register-header">
+                <h2>Crear Cuenta</h2>
+                <p>Completa el formulario para comenzar</p>
+            </div>
+
+            <!-- Success Message (si viene desde redirect) -->
+            <div th:if="${successMessage}" class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${error}" class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <form th:action="@{/auth/register}" method="post" th:object="${registerRequest}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="nombre" 
+                               th:field="*{nombre}"
+                               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid' : ''"
+                               placeholder="Ej: Juan"
+                               required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="apellido" class="form-label">Apellido</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="apellido" 
+                               th:field="*{apellido}"
+                               th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid' : ''"
+                               placeholder="Ej: Pérez"
+                               required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Correo Electrónico</label>
+                    <input type="email" 
+                           class="form-control" 
+                           id="email" 
+                           th:field="*{email}"
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                           placeholder="tu@email.com"
+                           required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="password" 
+                           th:field="*{password}"
+                           th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
+                           placeholder="Mínimo 8 caracteres"
+                           required>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
+
+                <button type="submit" class="btn btn-register">
+                    <i class="fas fa-user-plus me-2"></i>Crear Cuenta
+                </button>
+
+                <div class="login-link">
+                    ¿Ya tienes una cuenta? <a th:href="@{/auth/login}">Inicia sesión aquí</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
