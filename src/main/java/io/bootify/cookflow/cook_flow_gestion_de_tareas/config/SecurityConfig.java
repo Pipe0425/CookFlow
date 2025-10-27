@@ -31,11 +31,11 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable)
             .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint))
             .authorizeHttpRequests(auth -> auth
-                // Rutas administrativas: requiere ROLE_ADMIN
+                // Rutas administrativas: requiere ADMIN
                 .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
 
                 // Rutas públicas de auth, recursos estáticos y docs
-                .requestMatchers("/auth/**", "/api/auth/**",
+                .requestMatchers("/auth/**",
                                  "/", "/home", "/homePage",
                                  "/css/**", "/js/**", "/images/**",
                                  "/swagger-ui/**", "/v3/api-docs/**").permitAll()

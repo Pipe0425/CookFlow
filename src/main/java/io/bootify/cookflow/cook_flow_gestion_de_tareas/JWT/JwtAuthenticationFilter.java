@@ -1,12 +1,15 @@
 package io.bootify.cookflow.cook_flow_gestion_de_tareas.JWT;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -40,17 +43,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String token = getTokenFromRequest(request);
+        
+        // DEBUG: Log detallado del token
+        if (token != null) {
+            log.info("=== DEBUG TOKEN ===");
+            log.info("Path: {}", request.getServletPath());
+            log.info("Token (primeros 50 chars): {}", token.substring(0, Math.min(50, token.length())));
+            log.info("==================");
+        }
 
         if (token == null) {
-            filterChain.doFilter(request, response);
+            // Solo dejamos pasar si el endpoint es público
+            String path = request.getServletPath();
+            if (path.startsWith("/auth") || path.startsWith("/swagger") || 
+                path.startsWith("/v3/api-docs") || path.startsWith("/home") ||
+                path.equals("/")) {
+                filterChain.doFilter(request, response);
+            } else {
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\":\"Token ausente o inválido\"}");
+            }
             return;
         }
 
         String username = null;
         try {
-            username = jwtService.getUsernameFromToken(token);
+            username = jwtService.getEmailFromToken(token);
+            log.info("Email extraído del token: {}", username);
         } catch (Exception ex) {
-            // Token inválido / parse error -> no autenticamos, dejamos pasar para que endpoint lo rechace si necesario
             log.warn("Token inválido o no se pudo parsear: {}", ex.getMessage());
             filterChain.doFilter(request, response);
             return;
@@ -59,31 +80,68 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                log.info("Usuario cargado: {}", userDetails.getUsername());
 
                 // Validar token respecto al UserDetails
                 if (jwtService.isTokenValid(token, userDetails)) {
 
-                    // Si UserDetails es instancia de tu entidad Usuario, comprobamos si está activo
+                    // Si UserDetails es instancia de Usuario, comprobamos si está activo
                     if (userDetails instanceof Usuario) {
                         Usuario usuario = (Usuario) userDetails;
-                        // Comprobamos campo 'activo' (Boolean). Si es null o false, rechazamos.
+                        
+                        // Comprobamos campo 'activo'
                         if (!Boolean.TRUE.equals(usuario.getActivo())) {
+                            log.warn("Usuario inactivo: {}", usuario.getEmail());
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
                             response.setContentType("text/plain;charset=UTF-8");
                             response.getWriter().write("Tu cuenta está inactiva. Contacta al administrador.");
                             return;
                         }
+                        
+                        log.info("Usuario activo confirmado: {}", usuario.getEmail());
                     }
 
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    // Obtener el rol directamente del token
+                    String role = jwtService.getRoleFromToken(token);
+                    
+                    // CRÍTICO: Log para debugging
+                    log.info("Rol extraído del token (raw): '{}'", role);
+                    
+                    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                    
+                    if (role != null && !role.trim().isEmpty()) {
+                        // Limpiar el rol
+                        role = role.trim();
+                        
+                        // Asegurar prefijo ROLE_
+                        String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                        authorities.add(new SimpleGrantedAuthority(authority));
+                        
+                        log.info("Authority añadida al contexto de seguridad: '{}'", authority);
+                    } else {
+                        log.error("Token sin rol detectado - Probablemente es un token antiguo");
+                        // Token sin rol = rechazar inmediatamente para endpoints protegidos
+                        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"error\":\"Token obsoleto. Por favor, inicia sesión nuevamente.\"}");
+                        return;
+                    }
+
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            authorities
+                    );
+
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    
+                    log.info("Autenticación establecida para: {} con authorities: {}", 
+                             username, authorities);
                 }
 
             } catch (Exception ex) {
-                // Problema cargando usuario o autenticando: log y continuar (endpoint puede lanzar 401)
-                log.error("Error al autenticar con JWT: {}", ex.getMessage());
+                log.error("Error al autenticar con JWT: {}", ex.getMessage(), ex);
             }
         }
 
@@ -91,16 +149,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Intenta sacar el token primero de la cookie "token", y si no existe, busca en el header Authorization: Bearer ...
+     * Intenta sacar el token primero de la cookie "token", 
+     * y si no existe, busca en el header Authorization: Bearer ...
+     * PRIORIDAD: Cookie > Header
      */
     private String getTokenFromRequest(HttpServletRequest request) {
+        String tokenFromCookie = null;
+        String tokenFromHeader = null;
+        
         // Buscar cookie "token"
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("token".equals(cookie.getName())) {
                     String val = cookie.getValue();
                     if (StringUtils.hasText(val)) {
-                        return val;
+                        tokenFromCookie = val;
+                        log.debug("Token encontrado en cookie");
+                        break;
                     }
                 }
             }
@@ -109,18 +174,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Si no hay cookie, buscar en header Authorization
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
+            tokenFromHeader = authHeader.substring(7);
+            log.debug("Token encontrado en header Authorization");
         }
+        
+        // SIEMPRE dar prioridad a la cookie
+        if (tokenFromCookie != null) {
+            if (tokenFromHeader != null && !tokenFromCookie.equals(tokenFromHeader)) {
+                log.warn("Se detectaron dos tokens diferentes (cookie vs header). Usando el de la cookie.");
+            }
+            return tokenFromCookie;
+        }
+        
+        // Si no hay cookie, usar header
+        if (tokenFromHeader != null) {
+            return tokenFromHeader;
+        }
+        
+        log.debug("No se encontró token en la request");
         return null;
     }
 
     /**
-     * Excluir endpoints de autenticación (login/register) del filtro.
-     * Si necesitas excluir más rutas (swagger, actuator), añádelas aquí.
+     * Excluir endpoints de autenticación del filtro.
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/auth") || path.startsWith("/swagger") || path.startsWith("/v3/api-docs");
+        return path.startsWith("/auth") || 
+               path.startsWith("/swagger") || 
+               path.startsWith("/v3/api-docs");
     }
 }

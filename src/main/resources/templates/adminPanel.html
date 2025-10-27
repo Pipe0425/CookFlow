@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - CookFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/headerStyle.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0F084B;
+            --secondary-color: #26408B;
+            --accent-color: #A6CFD5;
+            --light-accent: #C2E7D9;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--light-accent) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-top: 90px;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .admin-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(15, 8, 75, 0.1);
+        }
+
+        .admin-header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 2rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-header h1 i {
+            color: var(--secondary-color);
+        }
+
+        .admin-header p {
+            color: #6c757d;
+            margin: 10px 0 0 0;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(15, 8, 75, 0.1);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-create {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(15, 8, 75, 0.2);
+            color: white;
+        }
+
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+
+        .table thead th {
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(166, 207, 213, 0.1);
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .badge-role {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .badge-admin {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .badge-staff {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+            color: white;
+        }
+
+        .btn-action {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            margin: 0 3px;
+        }
+
+        .btn-edit {
+            background: var(--accent-color);
+            color: var(--primary-color);
+        }
+
+        .btn-edit:hover {
+            background: var(--light-accent);
+            transform: translateY(-2px);
+        }
+
+        .btn-deactivate {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-deactivate:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px 30px;
+        }
+
+        .modal-title {
+            font-weight: 700;
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-label {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(38, 64, 139, 0.15);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-modal-save {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-modal-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(15, 8, 75, 0.2);
+            color: white;
+        }
+
+        .btn-modal-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-create {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .table {
+                font-size: 0.85rem;
+            }
+
+            .btn-action {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div th:replace="~{fragments/fragments :: header}"></div>
+
+    <div class="admin-container">
+        <!-- Admin Header -->
+        <div class="admin-header">
+            <h1>
+                <i class="fas fa-user-shield"></i>
+                Panel de Administración
+            </h1>
+            <p>Gestiona usuarios, roles y permisos del sistema</p>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Users Table -->
+        <div class="table-card">
+            <div class="table-header">
+                <h2 class="table-title">
+                    <i class="fas fa-users"></i>
+                    Usuarios del Sistema
+                </h2>
+                <button class="btn btn-create" data-bs-toggle="modal" data-bs-target="#createModal">
+                    <i class="fas fa-user-plus"></i>
+                    Crear Usuario
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Loading state -->
+                        <tr id="loadingRow">
+                            <td colspan="6" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createModalLabel">
+                        <i class="fas fa-user-plus me-2"></i>Crear Nuevo Usuario
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="createForm">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="createNombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="createNombre" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="createApellido" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="createApellido" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="createEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createPassword" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="createPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createRole" class="form-label">Rol</label>
+                            <select class="form-select" id="createRole" required>
+                                <option value="">Seleccionar rol...</option>
+                                <option value="ADMIN">ADMIN</option>
+                                <option value="STAFF">STAFF</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="createActivo" checked>
+                            <label class="form-check-label" for="createActivo">Usuario Activo</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-modal-save">
+                            <i class="fas fa-save me-2"></i>Crear Usuario
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">
+                        <i class="fas fa-user-edit me-2"></i>Editar Usuario
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="editNombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="editNombre" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="editApellido" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="editApellido" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPassword" class="form-label">Nueva Contraseña (opcional)</label>
+                            <input type="password" class="form-control" id="editPassword" 
+                                   placeholder="Dejar en blanco para mantener la actual">
+                            <small class="text-muted">Solo ingresa una contraseña si deseas cambiarla</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editRole" class="form-label">Rol</label>
+                            <select class="form-select" id="editRole" required>
+                                <option value="ADMIN">ADMIN</option>
+                                <option value="STAFF">STAFF</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="editActivo">
+                            <label class="form-check-label" for="editActivo">Usuario Activo</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-modal-save">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API Base URL
+        const API_URL = '/api/admin/users';
+
+        // Load users on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+        });
+
+        // Load all users
+        async function loadUsers() {
+            try {
+                const response = await fetch(API_URL);
+                const users = await response.json();
+                
+                const tableBody = document.getElementById('tableBody');
+                
+                if (users.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <i class="fas fa-users-slash"></i>
+                                    <h4>No hay usuarios registrados</h4>
+                                    <p>Comienza creando el primer usuario del sistema</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tableBody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.idUsuario}</td>
+                        <td><strong>${user.nombre} ${user.apellido}</strong></td>
+                        <td>${user.email}</td>
+                        <td>
+                            <span class="badge-role ${user.role === 'ADMIN' ? 'badge-admin' : 'badge-staff'}">
+                                ${user.role}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge ${user.activo ? 'bg-success' : 'bg-danger'}">
+                                ${user.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-action btn-edit" onclick="openEditModal(${user.idUsuario})" 
+                                    title="Editar usuario">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${user.activo ? `
+                                <button class="btn btn-action btn-deactivate" 
+                                        onclick="deactivateUser(${user.idUsuario}, '${user.nombre} ${user.apellido}')"
+                                        title="Desactivar usuario">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showAlert('Error al cargar usuarios', 'danger');
+            }
+        }
+
+        // Create user form submission
+        document.getElementById('createForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                nombre: document.getElementById('createNombre').value,
+                apellido: document.getElementById('createApellido').value,
+                email: document.getElementById('createEmail').value,
+                password: document.getElementById('createPassword').value,
+                role: document.getElementById('createRole').value,
+                activo: document.getElementById('createActivo').checked
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    showAlert('Usuario creado exitosamente', 'success');
+                    document.getElementById('createForm').reset();
+                    loadUsers();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Error al crear usuario', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        });
+
+        // Open edit modal with user data
+        async function openEditModal(userId) {
+            try {
+                const response = await fetch(`/api/usuarios/${userId}`);
+                const user = await response.json();
+                
+                document.getElementById('editId').value = user.idUsuario;
+                document.getElementById('editNombre').value = user.nombre;
+                document.getElementById('editApellido').value = user.apellido;
+                document.getElementById('editEmail').value = user.email;
+                document.getElementById('editRole').value = user.role;
+                document.getElementById('editActivo').checked = user.activo;
+                document.getElementById('editPassword').value = '';
+                
+                new bootstrap.Modal(document.getElementById('editModal')).show();
+            } catch (error) {
+                console.error('Error loading user:', error);
+                showAlert('Error al cargar datos del usuario', 'danger');
+            }
+        }
+
+        // Edit user form submission
+        document.getElementById('editForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const userId = document.getElementById('editId').value;
+            const password = document.getElementById('editPassword').value;
+            
+            const data = {
+                nombre: document.getElementById('editNombre').value,
+                apellido: document.getElementById('editApellido').value,
+                email: document.getElementById('editEmail').value,
+                role: document.getElementById('editRole').value,
+                activo: document.getElementById('editActivo').checked
+            };
+
+            // Solo incluir password si se ingresó una nueva
+            if (password) {
+                data.password = password;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/${userId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    showAlert('Usuario actualizado exitosamente', 'success');
+                    loadUsers();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Error al actualizar usuario', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        });
+
+        // Deactivate user
+        async function deactivateUser(userId, userName) {
+            if (!confirm(`¿Estás seguro de desactivar al usuario "${userName}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/${userId}/deactivate`, {
+                    method: 'PATCH'
+                });
+
+                if (response.ok) {
+                    showAlert('Usuario desactivado exitosamente', 'success');
+                    loadUsers();
+                } else {
+                    showAlert('Error al desactivar usuario', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-custom alert-dismissible fade show`;
+            alert.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+    <script src="/js/header.js"></script>
+</body>
+</html>

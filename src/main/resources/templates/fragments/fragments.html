@@ -1,0 +1,91 @@
+<!DOCTYPE html> 
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- Header Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom" th:fragment="header">
+        <div class="container-fluid">
+            <!-- Brand Logo -->
+            <a class="navbar-brand" href="/home">
+                <i class="fas fa-utensils brand-icon"></i>
+                <span>CookFlow</span>
+            </a>
+
+            <!-- Mobile Toggle Button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" 
+                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation Links -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/tablero">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Tablero</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/checklist">
+                            <i class="fas fa-broom"></i>
+                            <span>Checklist</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/historial">
+                            <i class="fas fa-archive"></i>
+                            <span>Historial</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/perfil">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Mi Perfil</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- User Dropdown -->
+                <div class="user-dropdown">
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle" type="button" id="userDropdown" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar" 
+                                th:text="${perfil != null and perfil.nombre != null ? #strings.substring(perfil.nombre, 0, 1).toUpperCase() : 'U'}">
+                                U
+                            </div>
+                            <span th:text="${perfil != null ? perfil.nombre : 'Usuario'}">Usuario</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <span class="dropdown-header">
+                                    <i class="fas fa-user-circle me-2"></i>MI CUENTA
+                                </span>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/miPerfil">
+                                    <i class="fas fa-user"></i>
+                                    <span>Ver Perfil</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/perfil?tab=password">
+                                    <i class="fas fa-key"></i>
+                                    <span>Cambiar Contraseña</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" style="margin: 0;">
+                                    <button type="submit" class="dropdown-item logout">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Cerrar Sesión</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>

@@ -36,7 +36,7 @@ public class AuthService {
         );
 
         // Generar token JWT
-        String token = jwtService.getToken(user);
+        String token = jwtService.generateToken(user);
         return AuthResponse.builder().token(token).build();
     }
 
@@ -52,7 +52,7 @@ public class AuthService {
         userRepository.save(user);
 
         return AuthResponse.builder()
-                .token(jwtService.getToken(user))
+                .token(jwtService.generateToken(user))
                 .build();
     }
 }

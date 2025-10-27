@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - CookFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/headerStyle.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0F084B;
+            --secondary-color: #26408B;
+            --accent-color: #A6CFD5;
+            --light-accent: #C2E7D9;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--light-accent) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-top: 90px;
+        }
+
+        .profile-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(15, 8, 75, 0.15);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 40px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: rgba(166, 207, 213, 0.1);
+            border-radius: 50%;
+            top: -50px;
+            right: -50px;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 3rem;
+            color: var(--secondary-color);
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-email {
+            font-size: 1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-role {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .profile-body {
+            padding: 40px;
+        }
+
+        .info-section {
+            margin-bottom: 30px;
+        }
+
+        .info-section-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-section-title i {
+            margin-right: 12px;
+            color: var(--secondary-color);
+        }
+
+        .info-row {
+            display: flex;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            width: 150px;
+            font-size: 0.95rem;
+        }
+
+        .info-value {
+            color: #6c757d;
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-custom {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(15, 8, 75, 0.2);
+            color: white;
+        }
+
+        .btn-password {
+            background: var(--accent-color);
+            color: var(--primary-color);
+        }
+
+        .btn-password:hover {
+            background: var(--light-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(166, 207, 213, 0.3);
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px 30px;
+        }
+
+        .modal-title {
+            font-weight: 700;
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-label {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(38, 64, 139, 0.15);
+        }
+
+        .btn-modal-save {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-modal-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(15, 8, 75, 0.2);
+            color: white;
+        }
+
+        .btn-modal-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .password-requirements {
+            background: #f8f9fa;
+            border-left: 4px solid var(--secondary-color);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+        }
+
+        .password-requirements ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .password-requirements li {
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .info-row {
+                flex-direction: column;
+            }
+
+            .info-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .profile-body {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div th:replace="~{fragments/fragments :: header}"></div>
+
+    <div class="profile-container">
+        <!-- Success/Error Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-custom" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-danger alert-custom" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <!-- Header with Avatar -->
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h1 class="profile-name" th:text="${perfil.nombre + ' ' + perfil.apellido}">Usuario</h1>
+                <p class="profile-email" th:text="${perfil.email}">email@ejemplo.com</p>
+                <span class="profile-role" th:text="${perfil.role}">STAFF</span>
+            </div>
+
+            <!-- Body with Info -->
+            <div class="profile-body">
+                <!-- Personal Information Section -->
+                <div class="info-section">
+                    <h3 class="info-section-title">
+                        <i class="fas fa-user-circle"></i>
+                        Información Personal
+                    </h3>
+                    <div class="info-row">
+                        <span class="info-label">Nombre:</span>
+                        <span class="info-value" th:text="${perfil.nombre}">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Apellido:</span>
+                        <span class="info-value" th:text="${perfil.apellido}">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Correo:</span>
+                        <span class="info-value" th:text="${perfil.email}">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Rol:</span>
+                        <span class="info-value" th:text="${perfil.role}">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            <span th:if="${perfil.activo}" class="badge bg-success">Activo</span>
+                            <span th:unless="${perfil.activo}" class="badge bg-danger">Inactivo</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-edit btn-custom" data-bs-toggle="modal" data-bs-target="#editModal">
+                        <i class="fas fa-edit"></i> Editar Perfil
+                    </button>
+                    <button class="btn btn-password btn-custom" data-bs-toggle="modal" data-bs-target="#passwordModal">
+                        <i class="fas fa-key"></i> Cambiar Contraseña
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">
+                        <i class="fas fa-edit me-2"></i>Editar Perfil
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editProfileForm" th:action="@{/perfil/update}" method="post" th:object="${perfil}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="editNombre" class="form-label">Nombre</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="editNombre" 
+                                   name="nombre"
+                                   th:value="${perfil.nombre}"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editApellido" class="form-label">Apellido</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="editApellido" 
+                                   name="apellido"
+                                   th:value="${perfil.apellido}"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Correo Electrónico</label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   th:value="${perfil.email}"
+                                   disabled
+                                   readonly>
+                            <small class="text-muted">El correo no se puede modificar</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-modal-save">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="passwordModalLabel">
+                        <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="changePasswordForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Contraseña Actual</label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="currentPassword" 
+                                   name="currentPassword"
+                                   placeholder="Ingresa tu contraseña actual"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Nueva Contraseña</label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="newPassword" 
+                                   name="newPassword"
+                                   placeholder="Ingresa tu nueva contraseña"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirmar Nueva Contraseña</label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="confirmPassword" 
+                                   name="confirmPassword"
+                                   placeholder="Confirma tu nueva contraseña"
+                                   required>
+                        </div>
+                        
+                        <div class="password-requirements">
+                            <strong><i class="fas fa-info-circle me-2"></i>Requisitos de contraseña:</strong>
+                            <ul>
+                                <li>Mínimo 8 caracteres</li>
+                                <li>Al menos una letra mayúscula</li>
+                                <li>Al menos una letra minúscula</li>
+                                <li>Al menos un número</li>
+                                <li>Al menos un carácter especial (!@#$%^&*)</li>
+                            </ul>
+                        </div>
+
+                        <div id="passwordError" class="alert alert-danger mt-3" style="display: none;"></div>
+                        <div id="passwordSuccess" class="alert alert-success mt-3" style="display: none;"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-modal-save">
+                            <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Handle password change form submission
+        document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            const errorDiv = document.getElementById('passwordError');
+            const successDiv = document.getElementById('passwordSuccess');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/usuarios/me/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        currentPassword: currentPassword,
+                        newPassword: newPassword,
+                        confirmPassword: confirmPassword
+                    })
+                });
+
+                if (response.ok) {
+                    successDiv.textContent = '¡Contraseña cambiada exitosamente!';
+                    successDiv.style.display = 'block';
+                    document.getElementById('changePasswordForm').reset();
+                    
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('passwordModal')).hide();
+                        location.reload();
+                    }, 2000);
+                } else {
+                    const errorText = await response.text();
+                    errorDiv.textContent = errorText || 'Error al cambiar la contraseña';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error de conexión. Intenta nuevamente.';
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+    <script src="/js/header.js"></script>
+    <script src="/js/perfil.js"></script>
+</body>
+</html>
