@@ -11,7 +11,16 @@ import io.bootify.cookflow.cook_flow_gestion_de_tareas.repos.TareaIngredienteRep
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.repos.TareaPrepRepository;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.util.NotFoundException;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.util.ReferencedException;
+import jakarta.transaction.Transactional;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -63,6 +72,104 @@ public class TareaIngredienteService {
         final TareaIngrediente tareaIngrediente = tareaIngredienteRepository.findById(idTareIngrediente)
                 .orElseThrow(NotFoundException::new);
         tareaIngredienteRepository.delete(tareaIngrediente);
+    }
+
+    // --- EXISTENTES --- (findAll, get, create, update, delete) ...
+
+    // Nuevo: listar por tarea (DTO)
+    public List<TareaIngredienteDTO> findByTaskId(final Long taskId) {
+        final List<TareaIngrediente> list = tareaIngredienteRepository.findByTareaPrepIdTareaPrep(taskId);
+        return list.stream()
+                .map(ti -> mapToDTO(ti, new TareaIngredienteDTO()))
+                .toList();
+    }
+
+    // Nuevo: listar por tarea, pero en formato enriquecido (útil para frontend)
+    public List<Map<String, Object>> findByTaskIdEnriched(final Long taskId) {
+        final List<TareaIngrediente> list = tareaIngredienteRepository.findByTareaPrepIdTareaPrep(taskId);
+        List<Map<String,Object>> out = new ArrayList<>();
+        for (TareaIngrediente ti : list) {
+            Map<String,Object> m = new HashMap<>();
+            m.put("idTareIngrediente", ti.getIdTareIngrediente());
+            m.put("cantidad", ti.getCantidad());
+            if (ti.getIngrediente() != null) {
+                m.put("ingredienteId", ti.getIngrediente().getIdIngrediente());
+                m.put("ingredienteNombre", ti.getIngrediente().getNombre());
+                m.put("unidadMedida", ti.getIngrediente().getUnidadMedida());
+            } else {
+                m.put("ingredienteId", null);
+                m.put("ingredienteNombre", null);
+                m.put("unidadMedida", null);
+            }
+            m.put("tareaPrepId", ti.getTareaPrep() == null ? null : ti.getTareaPrep().getIdTareaPrep());
+            out.add(m);
+        }
+        return out;
+    }
+
+    // Nuevo: upsert (replace) lista de ingredientes para una tarea
+    @Transactional
+    public List<TareaIngredienteDTO> upsertForTask(final Long taskId, final List<UpsertItem> items) {
+        final TareaPrep tareaPrep = tareaPrepRepository.findById(taskId)
+                .orElseThrow(() -> new NotFoundException("tareaPrep not found"));
+
+        // Existing by ingredienteId
+        final List<TareaIngrediente> existingList =
+                tareaIngredienteRepository.findByTareaPrepIdTareaPrep(taskId);
+        final Map<Long, TareaIngrediente> existingByIngrediente = existingList.stream()
+                .filter(ti -> ti.getIngrediente() != null)
+                .collect(Collectors.toMap(ti -> ti.getIngrediente().getIdIngrediente(), ti -> ti));
+
+        // incoming IDs
+        final Set<Long> incomingIds = items.stream()
+                .map(UpsertItem::getIngredienteId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // Upsert each incoming
+        final List<TareaIngredienteDTO> resultList = new ArrayList<>();
+        for (UpsertItem it : items) {
+            if (it.getIngredienteId() == null) {
+                throw new IllegalArgumentException("ingredienteId is required in upsert item");
+            }
+            final Ingrediente ingrediente = ingredienteRepository.findById(it.getIngredienteId())
+                    .orElseThrow(() -> new NotFoundException("ingrediente not found"));
+
+            final TareaIngrediente exist = existingByIngrediente.get(it.getIngredienteId());
+            /* if (exist != null) {
+                exist.setCantidad(it.getCantidad());
+                tareaIngredienteRepository.save(exist);
+                resultList.add(mapToDTO(exist, new TareaIngredienteDTO()));
+            } else {
+                TareaIngrediente newTI = new TareaIngrediente();
+                newTI.setTareaPrep(tareaPrep);
+                newTI.setIngrediente(ingrediente);
+                newTI.setCantidad(it.getCantidad());
+                final TareaIngrediente saved = tareaIngredienteRepository.save(newTI);
+                resultList.add(mapToDTO(saved, new TareaIngredienteDTO()));
+            } */
+        }
+
+        // Delete any existing associations NOT present in incomingIds (replace semantics)
+        for (TareaIngrediente existing : existingList) {
+            Long ingId = existing.getIngrediente() == null ? null : existing.getIngrediente().getIdIngrediente();
+            if (ingId != null && !incomingIds.contains(ingId)) {
+                tareaIngredienteRepository.delete(existing);
+            }
+        }
+
+        return resultList;
+    }
+
+    // Helper class to parse payload (puedes mover a su propio archivo si prefieres)
+    public static class UpsertItem {
+        private Long ingredienteId;
+        private Double cantidad;
+
+        public Long getIngredienteId() { return ingredienteId; }
+        public void setIngredienteId(Long ingredienteId) { this.ingredienteId = ingredienteId; }
+        public Double getCantidad() { return cantidad; }
+        public void setCantidad(Double cantidad) { this.cantidad = cantidad; }
     }
 
     private TareaIngredienteDTO mapToDTO(final TareaIngrediente tareaIngrediente,

@@ -1,6 +1,8 @@
 package io.bootify.cookflow.cook_flow_gestion_de_tareas.service;
 
+import io.bootify.cookflow.cook_flow_gestion_de_tareas.domain.Estado;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.domain.TareaPrep;
+import io.bootify.cookflow.cook_flow_gestion_de_tareas.domain.Turno;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.domain.Usuario;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.events.BeforeDeleteTareaPrep;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.events.BeforeDeleteUsuario;
@@ -9,6 +11,8 @@ import io.bootify.cookflow.cook_flow_gestion_de_tareas.repos.TareaPrepRepository
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.repos.UsuarioRepository;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.util.NotFoundException;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.util.ReferencedException;
+
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -99,6 +103,30 @@ public class TareaPrepService {
             referencedException.addParam(responsableTareaPrep.getIdTareaPrep());
             throw referencedException;
         }
+    }
+
+    // Filtrar por fecha + turno (no archivadas por defecto)
+    public List<TareaPrepDTO> getTasksByDateAndTurn(final LocalDate fecha, final Turno turno) {
+        final List<TareaPrep> tareas = tareaPrepRepository.findAllByFechaAndTurnoAndArchivadaFalse(fecha, turno);
+        return tareas.stream()
+                .map(t -> mapToDTO(t, new TareaPrepDTO()))
+                .toList();
+    }
+
+    // Cambiar estado (PATCH /state)
+    public void setState(final Long idTareaPrep, final Estado nuevoEstado) {
+        final TareaPrep tarea = tareaPrepRepository.findById(idTareaPrep)
+                .orElseThrow(NotFoundException::new);
+        tarea.setEstado(nuevoEstado);
+        tareaPrepRepository.save(tarea);
+    }
+
+    // Archivar tarea (marcar archivada = true)
+    public void archiveTask(final Long idTareaPrep) {
+        final TareaPrep tarea = tareaPrepRepository.findById(idTareaPrep)
+                .orElseThrow(NotFoundException::new);
+        tarea.setArchivada(true);
+        tareaPrepRepository.save(tarea);
     }
 
 }
