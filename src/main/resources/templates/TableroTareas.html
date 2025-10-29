@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Tareas - CookFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/headerStyle.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0F084B;
+            --secondary-color: #26408B;
+            --accent-color: #A6CFD5;
+            --light-accent: #C2E7D9;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--light-accent) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-top: 90px;
+        }
+
+        .tablero-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .toolbar-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(15, 8, 75, 0.1);
+        }
+
+        .toolbar-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .toolbar-label {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 10px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(38, 64, 139, 0.15);
+        }
+
+        .btn-create-task {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-create-task:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(15, 8, 75, 0.2);
+            color: white;
+        }
+
+        .btn-toggle-archived {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-toggle-archived.active {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .tasks-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(15, 8, 75, 0.1);
+        }
+
+        .tasks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .tasks-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tasks-count {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+
+        .table thead th {
+            border: none;
+            padding: 15px 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(166, 207, 213, 0.1);
+        }
+
+        .table tbody td {
+            padding: 15px 12px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .task-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .task-description {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-top: 3px;
+        }
+
+        .badge-estado {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge-pendiente {
+            background: #ffeaa7;
+            color: #2d3436;
+        }
+
+        .badge-en-progreso {
+            background: #74b9ff;
+            color: #0984e3;
+        }
+
+        .badge-completado {
+            background: #55efc4;
+            color: #00b894;
+        }
+
+        .badge-prioridad {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .badge-prioridad-1 {
+            background: #ff7675;
+            color: white;
+        }
+
+        .badge-prioridad-2 {
+            background: #fdcb6e;
+            color: white;
+        }
+
+        .badge-prioridad-3 {
+            background: #74b9ff;
+            color: white;
+        }
+
+        .badge-turno {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-manana {
+            background: #ffeaa7;
+            color: #fdcb6e;
+        }
+
+        .badge-tarde {
+            background: #a29bfe;
+            color: #6c5ce7;
+        }
+
+        .badge-noche {
+            background: #2d3436;
+            color: #dfe6e9;
+        }
+
+        .btn-action {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            margin: 0 2px;
+        }
+
+        .btn-state {
+            background: var(--accent-color);
+            color: var(--primary-color);
+        }
+
+        .btn-state:hover {
+            background: var(--light-accent);
+            transform: translateY(-2px);
+        }
+
+        .btn-edit {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-archive {
+            background: #fdcb6e;
+            color: white;
+        }
+
+        .btn-archive:hover {
+            background: #f39c12;
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            padding: 20px 30px;
+        }
+
+        .modal-title {
+            font-weight: 700;
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-label {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .btn-modal-save {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-modal-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(15, 8, 75, 0.2);
+            color: white;
+        }
+
+        .btn-modal-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+        }
+
+        .empty-state h4 {
+            margin-bottom: 10px;
+        }
+
+        .loading-row {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        /* Mobile Cards */
+        @media (max-width: 992px) {
+            .table-responsive {
+                display: none;
+            }
+
+            .tasks-mobile {
+                display: block !important;
+            }
+
+            .task-card {
+                background: white;
+                border: 2px solid #f0f0f0;
+                border-radius: 15px;
+                padding: 20px;
+                margin-bottom: 15px;
+                transition: all 0.3s ease;
+            }
+
+            .task-card:hover {
+                border-color: var(--accent-color);
+                box-shadow: 0 4px 15px rgba(15, 8, 75, 0.1);
+            }
+
+            .task-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 15px;
+            }
+
+            .task-card-info {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .task-card-label {
+                font-weight: 600;
+                color: var(--primary-color);
+            }
+
+            .task-card-actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .toolbar-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toolbar-group {
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 993px) {
+            .tasks-mobile {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div th:replace="~{fragments/fragments :: header}"></div>
+
+    <div class="tablero-container">
+        <!-- Toolbar -->
+        <div class="toolbar-card">
+            <div class="toolbar-row">
+                <div class="toolbar-group">
+                    <label class="toolbar-label">
+                        <i class="fas fa-calendar me-1"></i> Fecha:
+                    </label>
+                    <input type="date" id="filterDate" class="form-control" style="width: 180px;">
+                </div>
+
+                <div class="toolbar-group">
+                    <label class="toolbar-label">
+                        <i class="fas fa-clock me-1"></i> Turno:
+                    </label>
+                    <select id="filterTurno" class="form-select" style="width: 150px;">
+                        <option value="MANANA">Mañana</option>
+                        <option value="TARDE">Tarde</option>
+                        <option value="NOCHE">Noche</option>
+                    </select>
+                </div>
+
+                <div class="toolbar-group">
+                    <input type="text" id="searchInput" class="form-control" placeholder="🔍 Buscar tarea..." style="width: 250px;">
+                </div>
+
+                <div class="toolbar-group ms-auto">
+                    <button class="btn btn-toggle-archived" id="btnToggleArchived">
+                        <i class="fas fa-archive me-2"></i>
+                        <span>Mostrar Archivadas</span>
+                    </button>
+                    <button class="btn btn-create-task" data-bs-toggle="modal" data-bs-target="#createModal">
+                        <i class="fas fa-plus"></i>
+                        <span>Nueva Tarea</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div id="alertContainer"></div>
+
+        <!-- Tasks Table -->
+        <div class="tasks-card">
+            <div class="tasks-header">
+                <h2 class="tasks-title">
+                    <i class="fas fa-tasks"></i>
+                    Tareas del Día
+                </h2>
+                <span class="tasks-count" id="tasksCount">0 tareas</span>
+            </div>
+
+            <!-- Desktop Table -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">Prior.</th>
+                            <th>Tarea</th>
+                            <th style="width: 150px;">Responsable</th>
+                            <th style="width: 120px;">Estado</th>
+                            <th style="width: 100px;">Turno</th>
+                            <th style="width: 200px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tasksTableBody">
+                        <tr class="loading-row">
+                            <td colspan="6">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 mb-0">Cargando tareas...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Cards -->
+            <div class="tasks-mobile" id="tasksMobileContainer">
+                <div class="loading-row">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Cargando tareas...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Task Modal -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        <span id="modalTitle">Nueva Tarea</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="taskForm">
+                    <input type="hidden" id="taskId">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="nombreTarea" class="form-label">Nombre de la Tarea *</label>
+                                <input type="text" class="form-control" id="nombreTarea" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="prioridad" class="form-label">Prioridad *</label>
+                                <select class="form-select" id="prioridad" required>
+                                    <option value="1">1 - Alta</option>
+                                    <option value="2" selected>2 - Media</option>
+                                    <option value="3">3 - Baja</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="fecha" class="form-label">Fecha *</label>
+                                <input type="date" class="form-control" id="fecha" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="turno" class="form-label">Turno *</label>
+                                <select class="form-select" id="turno" required>
+                                    <option value="MANANA">Mañana</option>
+                                    <option value="TARDE">Tarde</option>
+                                    <option value="NOCHE">Noche</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="estado" class="form-label">Estado *</label>
+                                <select class="form-select" id="estado" required>
+                                    <option value="PENDIENTE" selected>Pendiente</option>
+                                    <option value="EN_PROGRESO">En Progreso</option>
+                                    <option value="COMPLETADO">Completado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="responsable" class="form-label">Responsable *</label>
+                                <select class="form-select" id="responsable" required>
+                                    <option value="">Seleccionar responsable...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cantidadDescripcion" class="form-label">Cantidad / Nota</label>
+                                <input type="text" class="form-control" id="cantidadDescripcion" placeholder="Ej: 10 kg">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-modal-cancel" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-modal-save">
+                            <i class="fas fa-save me-2"></i>
+                            <span id="btnSaveText">Crear Tarea</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let allTasks = [];
+        let allUsers = [];
+        let showArchived = false;
+        let isEditMode = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterDate').value = today;
+            document.getElementById('fecha').value = today;
+
+            loadUsers();
+            loadTasks();
+
+            // Event listeners
+            document.getElementById('filterDate').addEventListener('change', loadTasks);
+            document.getElementById('filterTurno').addEventListener('change', loadTasks);
+            document.getElementById('searchInput').addEventListener('input', filterTasks);
+            document.getElementById('btnToggleArchived').addEventListener('click', toggleArchived);
+            document.getElementById('taskForm').addEventListener('submit', handleSubmit);
+
+            // Reset modal on close
+            document.getElementById('createModal').addEventListener('hidden.bs.modal', resetModal);
+        });
+
+        // Load users for dropdown
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/users', {
+                    credentials: 'same-origin'
+                });
+                
+                if (response.status === 401) {
+                    window.location.href = '/auth/login';
+                    return;
+                }
+
+                allUsers = await response.json();
+                const select = document.getElementById('responsable');
+                select.innerHTML = '<option value="">Seleccionar responsable...</option>' +
+                    allUsers.filter(u => u.activo).map(user => 
+                        `<option value="${user.idUsuario}">${user.nombre} ${user.apellido}</option>`
+                    ).join('');
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        // Load tasks
+        async function loadTasks() {
+            const date = document.getElementById('filterDate').value;
+            const turno = document.getElementById('filterTurno').value;
+
+            try {
+                const response = await fetch(`/api/tasks?date=${date}&turno=${turno}`, {
+                    credentials: 'same-origin'
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/auth/login';
+                    return;
+                }
+
+                allTasks = await response.json();
+                renderTasks();
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                showAlert('Error al cargar tareas', 'danger');
+            }
+        }
+
+        // Render tasks in table and cards
+        function renderTasks() {
+            const filteredTasks = allTasks.filter(task => 
+                showArchived || !task.archivada
+            );
+
+            document.getElementById('tasksCount').textContent = `${filteredTasks.length} tareas`;
+
+            // Desktop table
+            const tableBody = document.getElementById('tasksTableBody');
+            if (filteredTasks.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fas fa-clipboard-list"></i>
+                                <h4>No hay tareas para este día y turno</h4>
+                                <p>Comienza creando una nueva tarea</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = filteredTasks.map(task => `
+                    <tr data-task-id="${task.idTareaPrep}">
+                        <td>
+                            <div class="badge-prioridad badge-prioridad-${task.prioridad}">
+                                ${task.prioridad}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="task-name">${task.nombreTarea}</div>
+                            ${task.descripcion ? `<div class="task-description">${task.descripcion}</div>` : ''}
+                        </td>
+                        <td>${getUserName(task.responsable)}</td>
+                        <td>
+                            <span class="badge-estado badge-${task.estado.toLowerCase().replace('_', '-')}">
+                                ${getEstadoIcon(task.estado)} ${formatEstado(task.estado)}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge-turno badge-${task.turno.toLowerCase()}">
+                                ${task.turno}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-action btn-state" onclick="changeState(${task.idTareaPrep})" title="Cambiar estado">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="btn btn-action btn-edit" onclick="editTask(${task.idTareaPrep})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${!task.archivada ? `
+                                <button class="btn btn-action btn-archive" onclick="archiveTask(${task.idTareaPrep})" title="Archivar">
+                                    <i class="fas fa-archive"></i>
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-action btn-delete" onclick="deleteTask(${task.idTareaPrep})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Mobile cards
+            const mobileContainer = document.getElementById('tasksMobileContainer');
+            if (filteredTasks.length === 0) {
+                mobileContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h4>No hay tareas</h4>
+                        <p>Crea una nueva tarea para comenzar</p>
+                    </div>
+                `;
+            } else {
+                mobileContainer.innerHTML = filteredTasks.map(task => `
+                    <div class="task-card">
+                        <div class="task-card-header">
+                            <div>
+                                <div class="task-name mb-2">${task.nombreTarea}</div>
+                                <span class="badge-estado badge-${task.estado.toLowerCase().replace('_', '-')}">
+                                    ${getEstadoIcon(task.estado)} ${formatEstado(task.estado)}
+                                </span>
+                            </div>
+                            <div class="badge-prioridad badge-prioridad-${task.prioridad}">
+                                ${task.prioridad}
+                            </div>
+                        </div>
+                        <div class="task-card-info">
+                            <span class="task-card-label">Responsable:</span>
+                            <span>${getUserName(task.responsable)}</span>
+                            <span class="task-card-label">Turno:</span>
+                            <span><span class="badge-turno badge-${task.turno.toLowerCase()}">${task.turno}</span></span>
+                            ${task.descripcion ? `
+                                <span class="task-card-label">Descripción:</span>
+                                <span class="task-description">${task.descripcion}</span>
+                            ` : ''}
+                        </div>
+                        <div class="task-card-actions">
+                            <button class="btn btn-action btn-state" onclick="changeState(${task.idTareaPrep})">
+                                <i class="fas fa-sync-alt me-1"></i> Estado
+                            </button>
+                            <button class="btn btn-action btn-edit" onclick="editTask(${task.idTareaPrep})">
+                                <i class="fas fa-edit me-1"></i> Editar
+                            </button>
+                            ${!task.archivada ? `
+                                <button class="btn btn-action btn-archive" onclick="archiveTask(${task.idTareaPrep})">
+                                    <i class="fas fa-archive me-1"></i> Archivar
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-action btn-delete" onclick="deleteTask(${task.idTareaPrep})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Filter tasks by search
+        function filterTasks() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#tasksTableBody tr');
+            const cards = document.querySelectorAll('.task-card');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        // Toggle archived tasks
+        function toggleArchived() {
+            showArchived = !showArchived;
+            const btn = document.getElementById('btnToggleArchived');
+            btn.classList.toggle('active');
+            btn.querySelector('span').textContent = showArchived ? 'Ocultar Archivadas' : 'Mostrar Archivadas';
+            renderTasks();
+        }
+
+        // Change task state (cycle through states)
+        async function changeState(taskId) {
+            const task = allTasks.find(t => t.idTareaPrep === taskId);
+            if (!task) return;
+
+            const estados = ['PENDIENTE', 'EN_PROGRESO', 'COMPLETADO'];
+            const currentIndex = estados.indexOf(task.estado);
+            const nextEstado = estados[(currentIndex + 1) % estados.length];
+
+            try {
+                const response = await fetch(`/api/tasks/${taskId}/state`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ estado: nextEstado })
+                });
+
+                if (response.ok) {
+                    showAlert(`Estado actualizado a: ${formatEstado(nextEstado)}`, 'success');
+                    loadTasks();
+                } else {
+                    showAlert('Error al cambiar estado', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+
+        // Edit task
+        async function editTask(taskId) {
+            try {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    const task = await response.json();
+                    
+                    // Set form values
+                    isEditMode = true;
+                    document.getElementById('taskId').value = task.idTareaPrep;
+                    document.getElementById('nombreTarea').value = task.nombreTarea;
+                    document.getElementById('descripcion').value = task.descripcion || '';
+                    document.getElementById('fecha').value = task.fecha;
+                    document.getElementById('turno').value = task.turno;
+                    document.getElementById('estado').value = task.estado;
+                    document.getElementById('prioridad').value = task.prioridad;
+                    document.getElementById('responsable').value = task.responsable || '';
+                    document.getElementById('cantidadDescripcion').value = task.cantidadDescripcion || '';
+
+                    // Update modal title
+                    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit me-2"></i>Editar Tarea';
+                    document.getElementById('btnSaveText').textContent = 'Guardar Cambios';
+
+                    // Show modal
+                    new bootstrap.Modal(document.getElementById('createModal')).show();
+                } else {
+                    showAlert('Error al cargar tarea', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+
+        // Archive task
+        async function archiveTask(taskId) {
+            if (!confirm('¿Estás seguro de archivar esta tarea?')) return;
+
+            try {
+                const response = await fetch(`/api/tasks/${taskId}/archive`, {
+                    method: 'PATCH',
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    showAlert('Tarea archivada exitosamente', 'success');
+                    loadTasks();
+                } else {
+                    showAlert('Error al archivar tarea', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+
+        // Delete task
+        async function deleteTask(taskId) {
+            if (!confirm('¿Estás seguro de eliminar esta tarea? Esta acción no se puede deshacer.')) return;
+
+            try {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    showAlert('Tarea eliminada exitosamente', 'success');
+                    loadTasks();
+                } else {
+                    showAlert('Error al eliminar tarea', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+
+        // Handle form submit (create or update)
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const taskId = document.getElementById('taskId').value;
+            const data = {
+                nombreTarea: document.getElementById('nombreTarea').value,
+                descripcion: document.getElementById('descripcion').value,
+                fecha: document.getElementById('fecha').value,
+                turno: document.getElementById('turno').value,
+                estado: document.getElementById('estado').value,
+                prioridad: parseInt(document.getElementById('prioridad').value),
+                responsable: parseInt(document.getElementById('responsable').value) || null,
+                cantidadDescripcion: document.getElementById('cantidadDescripcion').value,
+                archivada: false
+            };
+
+            try {
+                const url = isEditMode ? `/api/tasks/${taskId}` : '/api/tasks';
+                const method = isEditMode ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    showAlert(isEditMode ? 'Tarea actualizada exitosamente' : 'Tarea creada exitosamente', 'success');
+                    loadTasks();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Error al guardar tarea', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'danger');
+            }
+        }
+
+        // Reset modal
+        function resetModal() {
+            isEditMode = false;
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Nueva Tarea';
+            document.getElementById('btnSaveText').textContent = 'Crear Tarea';
+            
+            // Set defaults
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha').value = today;
+            document.getElementById('turno').value = document.getElementById('filterTurno').value;
+            document.getElementById('estado').value = 'PENDIENTE';
+            document.getElementById('prioridad').value = '2';
+        }
+
+        // Helper functions
+        function getUserName(userId) {
+            if (!userId) return 'Sin asignar';
+            const user = allUsers.find(u => u.idUsuario === userId);
+            return user ? `${user.nombre} ${user.apellido}` : 'Desconocido';
+        }
+
+        function formatEstado(estado) {
+            const map = {
+                'PENDIENTE': 'Pendiente',
+                'EN_PROGRESO': 'En Progreso',
+                'COMPLETADO': 'Completado'
+            };
+            return map[estado] || estado;
+        }
+
+        function getEstadoIcon(estado) {
+            const icons = {
+                'PENDIENTE': '<i class="fas fa-clock"></i>',
+                'EN_PROGRESO': '<i class="fas fa-spinner"></i>',
+                'COMPLETADO': '<i class="fas fa-check-circle"></i>'
+            };
+            return icons[estado] || '';
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-custom alert-dismissible fade show`;
+            alert.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+    <script src="/js/header.js"></script>
+</body>
+</html>

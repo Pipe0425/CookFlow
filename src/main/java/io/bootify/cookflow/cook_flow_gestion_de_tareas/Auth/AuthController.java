@@ -51,7 +51,6 @@ public class AuthController {
         }
 
         try {
-            clearAuthCookies(response);
 
             var authResponse = authService.login(request); // lanza AuthenticationException si falla
             String token = authResponse.getToken();
@@ -127,81 +126,4 @@ public class AuthController {
         redirectAttributes.addFlashAttribute("successMessage", "Usuario registrado exitosamente.");
         return "redirect:/auth/login";
     }
-
-    // ----- MÉTODO HELPER PARA LIMPIAR COOKIES -----
-    /**
-     * Elimina todas las cookies de autenticación existentes.
-     * Esto previene conflictos con tokens viejos.
-     */
-    private void clearAuthCookies(HttpServletResponse response) {
-        // Limpiar cookie del token
-        Cookie tokenCookie = new Cookie("token", null);
-        tokenCookie.setMaxAge(0);
-        tokenCookie.setPath("/");
-        tokenCookie.setHttpOnly(true);
-        response.addCookie(tokenCookie);
-        
-        // Limpiar cookie de sesión
-        Cookie sessionCookie = new Cookie("JSESSIONID", null);
-        sessionCookie.setMaxAge(0);
-        sessionCookie.setPath("/");
-        response.addCookie(sessionCookie);
-        
-        log.debug("Cookies de autenticación limpiadas");
-    }
-    
-    // ----- ENDPOINT PARA LIMPIAR SESIÓN MANUALMENTE (OPCIONAL) -----
-    @PostMapping("/clear-session")
-    @ResponseBody
-    public String clearSession(HttpServletResponse response) {
-        clearAuthCookies(response);
-        return "{\"message\":\"Sesión limpiada exitosamente\"}";
-    }
-
-    @GetMapping("/debug/current-token")
-@ResponseBody
-public ResponseEntity<?> getCurrentToken(HttpServletRequest request) {
-    // Intentar obtener el token de la cookie
-    String tokenFromCookie = null;
-    if (request.getCookies() != null) {
-        for (Cookie cookie : request.getCookies()) {
-            if ("token".equals(cookie.getName())) {
-                tokenFromCookie = cookie.getValue();
-                break;
-            }
-        }
-    }
-    
-    // Obtener token del header
-    String tokenFromHeader = null;
-    String authHeader = request.getHeader("Authorization");
-    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-        tokenFromHeader = authHeader.substring(7);
-    }
-    
-    Map<String, Object> response = new HashMap<>();
-    response.put("tokenFromCookie", tokenFromCookie);
-    response.put("tokenFromHeader", tokenFromHeader);
-    
-    // Decodificar ambos tokens para ver sus claims
-    if (tokenFromCookie != null) {
-        try {
-            String role = jwtService.getRoleFromToken(tokenFromCookie);
-            response.put("cookieTokenRole", role);
-        } catch (Exception e) {
-            response.put("cookieTokenError", e.getMessage());
-        }
-    }
-    
-    if (tokenFromHeader != null) {
-        try {
-            String role = jwtService.getRoleFromToken(tokenFromHeader);
-            response.put("headerTokenRole", role);
-        } catch (Exception e) {
-            response.put("headerTokenError", e.getMessage());
-        }
-    }
-    
-    return ResponseEntity.ok(response);
-}
 }

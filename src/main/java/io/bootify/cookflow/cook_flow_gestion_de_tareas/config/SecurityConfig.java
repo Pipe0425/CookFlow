@@ -42,7 +42,7 @@ public class SecurityConfig {
 
                 // Endpoints protegidos de la app (ejemplos CookFlow)
                 .requestMatchers("/miPerfil", "/api/tasks/**", "/api/ingredients/**",
-                                 "/api/checklist/**", "/api/ingredients/consolidated").authenticated()
+                                 "/api/checklist/**", "/api/ingredients/consolidated", "/tareas", "/tareas/**").authenticated()
 
                 // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()
