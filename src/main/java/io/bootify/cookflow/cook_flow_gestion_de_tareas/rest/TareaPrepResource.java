@@ -3,6 +3,7 @@ package io.bootify.cookflow.cook_flow_gestion_de_tareas.rest;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.domain.Estado;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.domain.Turno;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.model.TareaPrepDTO;
+import io.bootify.cookflow.cook_flow_gestion_de_tareas.rest.TareaPrepResource.StateUpdateRequest;
 import io.bootify.cookflow.cook_flow_gestion_de_tareas.service.TareaPrepService;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -35,18 +36,20 @@ public class TareaPrepResource {
         this.tareaPrepService = tareaPrepService;
     }
 
-    // Listar por fecha y turno: /api/tasks?date=2025-10-27&turno=MANANA
+    // TareaPrepResource.java (reemplaza el método listByDateAndTurn existente)
     @GetMapping
     public ResponseEntity<List<TareaPrepDTO>> listByDateAndTurn(
             @RequestParam(required = false) String date,
-            @RequestParam(required = false) String turno) {
+            @RequestParam(required = false) String turno,
+            @RequestParam(required = false, defaultValue = "false") boolean includeArchived) {
 
         if (date != null && turno != null) {
             LocalDate localDate = LocalDate.parse(date); // yyyy-MM-dd
             Turno t = Turno.valueOf(turno.toUpperCase());
-            return ResponseEntity.ok(tareaPrepService.getTasksByDateAndTurn(localDate, t));
+            return ResponseEntity.ok(tareaPrepService.getTasksByDateAndTurn(localDate, t, includeArchived));
         }
-        // si no vienen filtros, devolver todo (o vacío)
+        // si no vienen filtros, devolver todo (nota: findAll() devuelve todo, incluyendo archivadas)
+        // Si prefieres respetar includeArchived cuando no vienen filtros, podrías añadir otro servicio.
         return ResponseEntity.ok(tareaPrepService.findAll());
     }
 

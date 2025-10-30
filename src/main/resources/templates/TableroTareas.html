@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tablero de Tareas - CookFlow</title>
+    <!-- flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="/css/headerStyle.css" rel="stylesheet">
@@ -205,7 +207,7 @@
             color: #0984e3;
         }
 
-        .badge-completado {
+        .badge-COMPLETADA {
             background: #55efc4;
             color: #00b894;
         }
@@ -471,7 +473,7 @@
                     <label class="toolbar-label">
                         <i class="fas fa-calendar me-1"></i> Fecha:
                     </label>
-                    <input type="date" id="filterDate" class="form-control" style="width: 180px;">
+                    <input type="text" id="filterDate" class="form-control" style="width: 180px;">
                 </div>
 
                 <div class="toolbar-group">
@@ -588,7 +590,7 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="fecha" class="form-label">Fecha *</label>
-                                <input type="date" class="form-control" id="fecha" required>
+                                <input type="text" class="form-control" id="fecha" required>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="turno" class="form-label">Turno *</label>
@@ -603,7 +605,7 @@
                                 <select class="form-select" id="estado" required>
                                     <option value="PENDIENTE" selected>Pendiente</option>
                                     <option value="EN_PROGRESO">En Progreso</option>
-                                    <option value="COMPLETADO">Completado</option>
+                                    <option value="COMPLETADA">COMPLETADA</option>
                                 </select>
                             </div>
                         </div>
@@ -635,6 +637,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         // Global variables
         let allTasks = [];
@@ -644,11 +647,15 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Set today's date
+            // Set today's date (esto es útil para fallback si JS falla)
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filterDate').value = today;
             document.getElementById('fecha').value = today;
 
+            // inicializar datepickers (flatpickr debe estar ya cargado con el <script src="flatpickr">)
+            initDatepickers();
+
+            // ahora cargar usuarios y tareas
             loadUsers();
             loadTasks();
 
@@ -663,13 +670,107 @@
             document.getElementById('createModal').addEventListener('hidden.bs.modal', resetModal);
         });
 
+        function parseYMD(ymd) {
+            if (!ymd) return new Date(NaN);
+            const parts = String(ymd).trim().split(/[-\/]/);
+            if (parts.length !== 3) return new Date(NaN);
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10) - 1;
+            const d = parseInt(parts[2], 10);
+            return new Date(y, m, d);
+        }
+        
+        function validateTaskForm(data){
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            const fecha = parseYMD(data.fecha);
+            fecha.setHours(0,0,0,0);
+
+            const max = new Date();
+            max.setDate(max.getDate()+60);
+            max.setHours(0,0,0,0);
+
+            const minAllowed = new Date(2020, 0, 1); // no se permiten fechas anteriores a 2020
+            minAllowed.setHours(0,0,0,0);
+
+            if (isNaN(fecha.getTime())) {
+                showAlert('Fecha inválida', 'danger');
+                return false;
+            }
+
+            // No permitir fechas anteriores a 2020
+            if (fecha.getTime() < minAllowed.getTime()) {
+                showAlert('No puedes usar fechas anteriores al 1 de enero de 2020', 'danger');
+                return false;
+            }
+
+            // permitir fecha == hoy (no la marcamos como pasada)
+            if (fecha.getTime() < today.getTime()) {
+                showAlert('No puedes seleccionar una fecha en el pasado', 'danger');
+                return false;
+            }
+
+            if (fecha.getTime() > max.getTime()) {
+                showAlert('La fecha no puede ser tan lejana (máx. +60 días)', 'danger');
+                return false;
+            }
+
+            // Responsable obligatorio
+            if (!data.responsable) {
+                showAlert('Selecciona un responsable', 'danger');
+                return false;
+            }
+
+            // Nombre de tarea: mínimo 3 caracteres
+            if (!data.nombreTarea || data.nombreTarea.trim().length < 3) {
+                showAlert('El nombre de la tarea debe tener al menos 3 caracteres', 'danger');
+                return false;
+            }
+
+            // Prioridad: 1,2,3
+            if (![1,2,3].includes(Number(data.prioridad))) {
+                showAlert('Prioridad inválida', 'danger');
+                return false;
+            }
+
+            // Estado válido
+            const estadosValidos = ['PENDIENTE','EN_PROGRESO','COMPLETADA'];
+            if (!estadosValidos.includes(String(data.estado))) {
+                showAlert('Estado inválido', 'danger');
+                return false;
+            }
+
+            // Turno válido
+            const turnosValidos = ['MANANA','TARDE','NOCHE'];
+            if (!turnosValidos.includes(String(data.turno))) {
+                showAlert('Turno inválido', 'danger');
+                return false;
+            }
+
+            // Cantidad / nota: opcional pero si existe debe ser normalizable
+            if (data.cantidadDescripcion && data.cantidadDescripcion.trim() !== '') {
+                const n = normalizeCantidad(data.cantidadDescripcion);
+                if (!n) {
+                    showAlert('Cantidad/Nota inválida. Usa formatos como "10 kg", "2.5 L", "8 porciones" o sólo el número (ej. "10")', 'danger');
+                    return false;
+                }
+                // si está ok, lo normalizamos en el objeto data
+                data.cantidadDescripcion = n;
+            } else {
+                data.cantidadDescripcion = null;
+            }
+
+            return true;
+        }
+
         // Load users for dropdown
         async function loadUsers() {
             try {
-                const response = await fetch('/api/admin/users', {
+                const response = await fetch('/api/usuarios', {
                     credentials: 'same-origin'
                 });
-                
+
                 if (response.status === 401) {
                     window.location.href = '/auth/login';
                     return;
@@ -686,13 +787,58 @@
             }
         }
 
+        // datepicker config
+        function initDatepickers(){
+            const today = new Date();
+            const maxDate = new Date();
+            maxDate.setDate(maxDate.getDate() + 365); // máximo a 1 año futuro
+
+            const minAllowed = new Date(2020, 0, 1); // 2020-01-01
+
+            // filterDate: permite pasado pero no antes de 2020
+            flatpickr("#filterDate", {
+                dateFormat: "Y-m-d",
+                minDate: minAllowed,
+                maxDate: maxDate,
+                allowInput: false,
+                defaultDate: today,
+                onChange: function(selectedDates, dateStr) { loadTasks(); }
+            });
+
+            // fecha (modal): desde hoy (o desde 2020 si hoy fuera anterior)
+            const minForFecha = today > minAllowed ? today : minAllowed;
+            flatpickr("#fecha", {
+                dateFormat: "Y-m-d",
+                minDate: minForFecha,
+                maxDate: maxDate,
+                allowInput: false,
+                defaultDate: today
+            });
+        }
+
         // Load tasks
         async function loadTasks() {
             const date = document.getElementById('filterDate').value;
             const turno = document.getElementById('filterTurno').value;
 
+            const minAllowed = new Date(2020, 0, 1);
+            const selectedDate = parseYMD(date);
+            if (!isNaN(selectedDate.getTime()) && selectedDate.getTime() < minAllowed.getTime()) {
+                showAlert('No puedes consultar tareas anteriores al 1 de enero de 2020', 'danger');
+                return; // no hacemos la llamada al backend
+            }
+
             try {
-                const response = await fetch(`/api/tasks?date=${date}&turno=${turno}`, {
+                // Aseguramos que el booleano vaya como 'true' o 'false'
+                const includeArchivedParam = encodeURIComponent(String(showArchived));
+                // proteger date y turno en caso de valores vacíos
+                const dateParam = encodeURIComponent(date || '');
+                const turnoParam = encodeURIComponent(turno || '');
+
+                const url = `/api/tasks?date=${dateParam}&turno=${turnoParam}&includeArchived=${includeArchivedParam}`;
+                console.debug('Fetching tasks from:', url);
+
+                const response = await fetch(url, {
                     credentials: 'same-origin'
                 });
 
@@ -701,7 +847,15 @@
                     return;
                 }
 
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Error response from /api/tasks:', response.status, text);
+                    showAlert('Error al cargar tareas (ver consola)', 'danger');
+                    return;
+                }
+
                 allTasks = await response.json();
+                console.debug('allTasks received:', allTasks, 'showArchived:', showArchived);
                 renderTasks();
             } catch (error) {
                 console.error('Error loading tasks:', error);
@@ -852,7 +1006,8 @@
             const btn = document.getElementById('btnToggleArchived');
             btn.classList.toggle('active');
             btn.querySelector('span').textContent = showArchived ? 'Ocultar Archivadas' : 'Mostrar Archivadas';
-            renderTasks();
+            // Pedimos al backend incluyendo archivadas (si el backend lo soporta)
+            loadTasks();
         }
 
         // Change task state (cycle through states)
@@ -860,7 +1015,7 @@
             const task = allTasks.find(t => t.idTareaPrep === taskId);
             if (!task) return;
 
-            const estados = ['PENDIENTE', 'EN_PROGRESO', 'COMPLETADO'];
+            const estados = ['PENDIENTE', 'EN_PROGRESO', 'COMPLETADA'];
             const currentIndex = estados.indexOf(task.estado);
             const nextEstado = estados[(currentIndex + 1) % estados.length];
 
@@ -977,10 +1132,16 @@
                 turno: document.getElementById('turno').value,
                 estado: document.getElementById('estado').value,
                 prioridad: parseInt(document.getElementById('prioridad').value),
-                responsable: parseInt(document.getElementById('responsable').value) || null,
+                responsable: (function(v){ const n = parseInt(v); return Number.isNaN(n) ? null : n; })(document.getElementById('responsable').value),
                 cantidadDescripcion: document.getElementById('cantidadDescripcion').value,
                 archivada: false
             };
+
+            // -------------- VALIDACIÓN LOCAL --------------
+            // validateTaskForm devuelve true si está OK, y muestra alert en caso contrario
+            if (!validateTaskForm(data)) {
+                return; // si no pasa validación, no enviamos
+            }
 
             try {
                 const url = isEditMode ? `/api/tasks/${taskId}` : '/api/tasks';
@@ -994,15 +1155,24 @@
                 });
 
                 if (response.ok) {
-                    bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                    // cerrar modal y refrescar
+                    const modalEl = document.getElementById('createModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    } else {
+                        // por si acaso se abrió manualmente
+                        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                    }
                     showAlert(isEditMode ? 'Tarea actualizada exitosamente' : 'Tarea creada exitosamente', 'success');
                     loadTasks();
                 } else {
-                    const error = await response.json();
-                    showAlert(error.message || 'Error al guardar tarea', 'danger');
+                    // normalizamos el mensaje de error con parseErrorResponse
+                    const msg = await parseErrorResponse(response);
+                    showAlert(msg || 'Error al guardar tarea', 'danger');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error en handleSubmit:', error);
                 showAlert('Error de conexión', 'danger');
             }
         }
@@ -1034,7 +1204,7 @@
             const map = {
                 'PENDIENTE': 'Pendiente',
                 'EN_PROGRESO': 'En Progreso',
-                'COMPLETADO': 'Completado'
+                'COMPLETADA': 'Completada'
             };
             return map[estado] || estado;
         }
@@ -1043,7 +1213,7 @@
             const icons = {
                 'PENDIENTE': '<i class="fas fa-clock"></i>',
                 'EN_PROGRESO': '<i class="fas fa-spinner"></i>',
-                'COMPLETADO': '<i class="fas fa-check-circle"></i>'
+                'COMPLETADA': '<i class="fas fa-check-circle"></i>'
             };
             return icons[estado] || '';
         }
@@ -1067,7 +1237,54 @@
                 alert.remove();
             }, 5000);
         }
+
+        async function parseErrorResponse(resp){
+            try {
+                const json = await resp.json();
+                // escenarios: { message: "..."} o { error: "..." } o string
+                return json.message || json.error || JSON.stringify(json);
+            } catch(e) {
+                try {
+                    const text = await resp.text();
+                    return text || `HTTP ${resp.status}`;
+                } catch(_) {
+                    return `HTTP ${resp.status}`;
+                }
+            }
+        }
+
+        function normalizeCantidad(input) {
+            if (!input) return null;
+            // quitar espacios excesivos y normalizar coma a punto
+            const clean = String(input).trim().replace(',', '.');
+            // regex: número (entero o decimal) opcional + unidad opcional
+            // acepta: "10", "10 kg", "2.5L", "8 porciones", "100g", "12 unidades"
+            const re = /^(\d+(?:\.\d+)?)(?:\s*(kg|g|l|ml|unidades|unidad|porciones|porción|pz|pcs|u))?$/i;
+            const m = clean.match(re);
+            if (!m) return null;
+            let num = m[1];
+            let unit = (m[2] || '').toLowerCase();
+
+            // normalizar algunas unidades a formas consistentes
+            const map = {
+                'kg': 'kg',
+                'g': 'g',
+                'l': 'L',
+                'ml': 'ml',
+                'unidades': 'unidades',
+                'unidad': 'unidades',
+                'porciones': 'porciones',
+                'porción': 'porciones',
+                'pz': 'pz',
+                'pcs': 'pz',
+                'u': 'unidades'
+            };
+            const normalizedUnit = map[unit] || '';
+
+            return normalizedUnit ? `${num} ${normalizedUnit}` : `${num}`;
+        }
     </script>
     <script src="/js/header.js"></script>
+    <script src="/js/perfil.js"></script>
 </body>
 </html>

@@ -54,7 +54,7 @@
                                 th:text="${perfil != null and perfil.nombre != null ? #strings.substring(perfil.nombre, 0, 1).toUpperCase() : 'U'}">
                                 U
                             </div>
-                            <span th:text="${perfil != null ? perfil.nombre : 'Usuario'}">Usuario</span>
+                            <span th:text="${perfil != null ? perfil.nombre : 'Usuario'}"></span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li>

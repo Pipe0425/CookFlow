@@ -106,8 +106,15 @@ public class TareaPrepService {
     }
 
     // Filtrar por fecha + turno (no archivadas por defecto)
-    public List<TareaPrepDTO> getTasksByDateAndTurn(final LocalDate fecha, final Turno turno) {
-        final List<TareaPrep> tareas = tareaPrepRepository.findAllByFechaAndTurnoAndArchivadaFalse(fecha, turno);
+    public List<TareaPrepDTO> getTasksByDateAndTurn(final LocalDate fecha, final Turno turno, final boolean includeArchived) {
+        final List<TareaPrep> tareas;
+        if (includeArchived) {
+            // devuelve todas (archivadas y no)
+            tareas = tareaPrepRepository.findAllByFechaAndTurno(fecha, turno);
+        } else {
+            // comportamiento previo: sólo no archivadas
+            tareas = tareaPrepRepository.findAllByFechaAndTurnoAndArchivadaFalse(fecha, turno);
+        }
         return tareas.stream()
                 .map(t -> mapToDTO(t, new TareaPrepDTO()))
                 .toList();
